@@ -1,0 +1,81 @@
+metadata:
+  # change these fields when modifying this job for your own tests
+  test.plan: boot
+  device.type: ${DEVICE_TYPE}
+  job.name: ${JOB_NAME}
+  job.arch: ${MACH_ARCH}
+  job.kernel_url: ${FILESERVER_URL}/mainline/master/v4.15/arm/bcm2835_defconfig/zImage
+  job.modules_url: ${FILESERVER_URL}/mainline/master/v4.15/arm/bcm2835_defconfig/modules.tar.xz
+  job.initrd_url: ${FILESERVER_URL}/images/rootfs/buildroot/armel/rootfs.cpio.gz
+  job.dtb_url: ${FILESERVER_URL}/mainline/master/v4.15/arm/bcm2835_defconfig/dtbs/bcm2837-rpi-3-b.dtb
+
+# the device_type used for the job definition
+device_type: ${DEVICE_TYPE}
+
+# context allows specific values to be overridden or included
+context: test_character
+delay: "10"
+console_device: ${CONSOLE_DEVICE}
+
+# description of the test objective
+job_name: ${JOB_NAME}
+
+# default time-out for the job
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 10
+  actions:
+    power-off:
+      seconds: 30
+
+# priority of the job definition
+priority: high
+
+# visibility of the job definition
+visibility: public
+
+# defines the pipeline job submissions (syntax formats: list of dictionaries, so a : follow by a -)
+actions:
+  # "deploy" action of list item type
+  - deploy:
+    timeout:
+      minutes: 10
+    to: tftp
+    kernel:
+      url: ${FILESERVER_URL}/technexion/linux-4.14.y/v4.14.98/arm/tn_imx_defconfig/gcc-8/zImage
+      type: zimage
+    ramdisk:
+      url: ${FILESERVER_URL}/technexion/buildroot/armel/rootfs.cpio.gz
+      compression: gz
+    modules:
+      url: ${FILESERVER_URL}/technexion/linux-4.14.y/v4.14.98/arm/tn_imx_defconfig/gcc-8/modules.tar.xz
+      compression: xz
+    dtb:
+      url: ${FILESERVER_URL}/technexion/linux-4.14.y/v4.14.98/arm/tn_imx_defconfig/gcc-8/dtbs/imx6q-pico-pi-qca.dtb
+    os: oe
+
+  - boot: # "boot" action of list item type
+    method: u-boot
+    commands: ramdisk
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    prompts:
+      - '/ #'
+      - 'linaro-test'
+      - 'root@debian:~#'
+      - 'root@lec-imx8mp:~#'
+    timeout:
+      minutes: 5
+
+  - test: # "test" action of list item type
+    timeout:
+      minutes: 5
+    definitions:
+      - repository: ${TEST_GIT_REPO}
+        from: git
+        path: ${TEST_DIRECTORY}/${TEST_DEFINITION}
+        name: ${TEST_TITLE}
+
