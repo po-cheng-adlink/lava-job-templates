@@ -1,0 +1,66 @@
+metadata:
+  test.plan: u-boot-ums
+  device.type: ${DEVICE_TYPE}
+  job.name: ${JOB_NAME}
+  job.arch: ${MACH_ARCH}
+  job.image_url: ${FILESERVER_URL}/adlink/sdcard/${SDCARD_IMAGE_NAME}
+  job.image_type: ${TEST_IMAGE_TYPE}
+
+device_type: ${DEVICE_TYPE}
+
+context:
+  test_character_delay: 10
+  console_device: ${CONSOLE_DEVICE}
+
+job_name: ${JOB_NAME}
+
+timeouts:
+  job:
+    minutes: 40
+  action:
+    minutes: 20
+  actions:
+    power-off:
+      seconds: 30
+
+priority: high
+
+visibility: public
+
+actions:
+- deploy:
+    timeout:
+      minutes: 10
+    to: u-boot-ums
+    image:
+      url: ${FILESERVER_URL}/adlink/sdcard/${SDCARD_IMAGE_NAME}
+      compression: ${TEST_IMAGE_COMPRESSION}
+      root_partition: ${TEST_IMAGE_ROOTPART}
+
+
+- boot:
+    method: u-boot
+    commands: ums
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    transfer_overlay:
+      download_command: sleep 30 && udhcpc -i eth0 && rm -f *.tar* && echo -e '#!/bin/bash\nwget $1 || wget ${1%.gz}' > wgeturl.sh && chmod +x wgeturl.sh && ./wgeturl.sh
+      unpack_command: echo -e '#!/bin/bash\ntar -C / -xvpf $1 || tar -C / -xvpf ${1%.gz}' > untarurl.sh && chmod +x untarurl.sh && ./untarurl.sh
+    prompts:
+      - 'root@lec-imx8m:~#'
+      - 'root@lec-imx8mp:~#'
+    timeout:
+      minutes: 45
+
+
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+      - repository: ${TEST_GIT_REPO}
+        from: git
+        path: ${TEST_DIRECTORY}/${TEST_DEFINITION}
+        name: ${TEST_TITLE}
+        branch: ${TEST_GIT_BRANCH}
+
