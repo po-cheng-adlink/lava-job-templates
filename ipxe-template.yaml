@@ -1,0 +1,61 @@
+metadata:
+  test.plan: x86-ipxe devices deply via tftp and boot via ramdisk
+  device.type: ${DEVICE_TYPE}
+  job.name: ${JOB_NAME}
+  job.arch: ${MACH_ARCH}
+  job.image_url: ${FILESERVER_URL}/adlink/sdcard/${SDCARD_IMAGE_NAME}
+  job.image_type: ${TEST_IMAGE_TYPE}
+
+device_type: ${DEVICE_TYPE}
+
+context:
+  extra_kernel_args: "console=ttyS1,115200n8"
+
+job_name: ${JOB_NAME}
+
+timeouts:
+  job:
+    minutes: 30
+  action:
+    minutes: 3
+  connection:
+    minutes: 2
+
+priority: medium
+
+visibility: public
+
+actions:
+- deploy:
+    timeout:
+      minutes: 20
+    to: tftp
+    kernel:
+      url: ${FILESERVER_URL}/adlink/${MACHINE}/${INITRAMFS_IMAGE_NAME}
+    os: oe
+
+- boot:
+    timeout:
+      minutes: 8
+    method: ipxe
+    commands: ramdisk
+    parameters:
+      shutdown-message: "reboot: Restarting system"
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+      login_commands:
+      - su
+    prompts:
+    - 'intel-corei7-64:~#'
+
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+      - repository: ${TEST_GIT_REPO}
+        from: git
+        path: ${TEST_DIRECTORY}/${TEST_DEFINITION}
+        name: ${TEST_TITLE}
+        branch: ${TEST_GIT_BRANCH}
+
