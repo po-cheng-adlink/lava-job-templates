@@ -1,5 +1,5 @@
 metadata:
-  test.plan: u-boot-ums
+  test.plan: lec-imx8mp-ipi
   device.type: ${DEVICE_TYPE}
   job.name: ${JOB_NAME}
   job.arch: ${MACH_ARCH}
@@ -31,7 +31,7 @@ actions:
 - deploy:
     timeout:
       minutes: 10
-    to: u-boot-ums
+    to: imx8-uboot-ums
     image:
       url: ${FILESERVER_URL}/adlink/sdcard/${SDCARD_IMAGE_NAME}
       compression: ${TEST_IMAGE_COMPRESSION}
@@ -45,7 +45,7 @@ actions:
       login_prompt: 'login:'
       username: root
     transfer_overlay:
-      download_command: sleep 30 && udhcpc -i eth0 && rm -f *.tar* && echo -e '#!/bin/bash\nwget $1 || wget ${1%.gz}' > wgeturl.sh && chmod +x wgeturl.sh && ./wgeturl.sh
+      download_command: udhcpc -i eth0 && rm -f *.tar* && echo -e '#!/bin/bash\nwget $1 || wget ${1%.gz}' > wgeturl.sh && chmod +x wgeturl.sh && ./wgeturl.sh
       unpack_command: echo -e '#!/bin/bash\ntar -C / -xvpf $1 || tar -C / -xvpf ${1%.gz}' > untarurl.sh && chmod +x untarurl.sh && ./untarurl.sh
     prompts:
       - 'root@lec-imx8m:~#'
