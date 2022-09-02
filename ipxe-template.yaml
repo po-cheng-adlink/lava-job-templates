@@ -45,8 +45,8 @@ actions:
       login_prompt: 'login:'
       username: root
     transfer_overlay:
-      download_command: udhcpc -i eth0 && rm -f *.tar* && echo -e '#!/bin/bash\nwget $1 || wget ${1%.gz}' > wgeturl.sh && chmod +x wgeturl.sh && ./wgeturl.sh
-      unpack_command: echo -e '#!/bin/bash\ntar -C / -xvpf $1 || tar -C / -xvpf ${1%.gz}' > untarurl.sh && chmod +x untarurl.sh && ./untarurl.sh
+      download_command: udhcpc -i eth0 && sleep 5 && wget
+      unpack_command: tar -C / -xvpf
     prompts:
     - 'intel-corei7-64:~#'
 
