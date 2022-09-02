@@ -3,13 +3,13 @@ metadata:
   device.type: ${DEVICE_TYPE}
   job.name: ${JOB_NAME}
   job.arch: ${MACH_ARCH}
-  job.image_url: ${FILESERVER_URL}/adlink/sdcard/${SDCARD_IMAGE_NAME}
+  job.image_url: ${FILESERVER_URL}/adlink/${MACH_ARCH}/${TARGET_IMAGE_NAME}
   job.image_type: ${TEST_IMAGE_TYPE}
 
 device_type: ${DEVICE_TYPE}
 
 context:
-  extra_kernel_args: "console=ttyS1,115200n8"
+  extra_kernel_args: "console=${CONSOLE_DEVICE},115200n8"
 
 job_name: ${JOB_NAME}
 
@@ -31,7 +31,7 @@ actions:
       minutes: 20
     to: tftp
     kernel:
-      url: ${FILESERVER_URL}/adlink/${MACHINE}/${INITRAMFS_IMAGE_NAME}
+      url: ${FILESERVER_URL}/adlink/${MACH_ARCH}/${TARGET_IMAGE_NAME}
     os: oe
 
 - boot:
