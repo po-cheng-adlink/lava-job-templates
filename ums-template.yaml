@@ -1,5 +1,5 @@
 metadata:
-  test.plan: lec-imx8mp-ipi
+  test.plan: using lec-imx8mp-ipi and deploy using u-boot-ums method
   device.type: ${DEVICE_TYPE}
   job.name: ${JOB_NAME}
   job.arch: ${MACH_ARCH}
@@ -31,7 +31,7 @@ actions:
 - deploy:
     timeout:
       minutes: 10
-    to: imx8-uboot-ums
+    to: u-boot-ums
     image:
       url: ${FILESERVER_URL}/adlink/sdcard/${SDCARD_IMAGE_NAME}
       compression: ${TEST_IMAGE_COMPRESSION}
