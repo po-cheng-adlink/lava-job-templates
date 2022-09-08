@@ -1,0 +1,80 @@
+metadata:
+  test.plan: x86-ipxe devices deploy via nbd and boot via nbdroot, ex from up2-tests-from-tar.yaml
+  device.type: ${DEVICE_TYPE}
+  job.name: ${JOB_NAME}
+  job.arch: ${MACH_ARCH}
+  job.kernel_image_url: ${FILESERVER_URL}/adlink/${MACH_ARCH}/${TARGET_KERNEL_IMAGE_NAME}
+  job.initramfs_image_url: ${FILESERVER_URL}/adlink/${MACH_ARCH}/${TARGET_INITRAMFS_IMAGE_NAME}
+  job.rootfs_image_url: ${FILESERVER_URL}/adlink/${MACH_ARCH}/${TARGET_ROOTFS_IMAGE_NAME}
+  job.image_type: ${TEST_IMAGE_TYPE}
+
+device_type: ${DEVICE_TYPE}
+
+context:
+  extra_kernel_args: "initrd=${TARGET_INITRAMFS_IMAGE_NAME} console=${CONSOLE_DEVICE},115200n8"
+
+job_name: ${JOB_NAME}
+
+timeouts:
+  job:
+    minutes: 30
+  action:
+    minutes: 3
+  connection:
+    minutes: 2
+
+priority: medium
+
+visibility: public
+
+protocols:
+  lava-xnbd:
+    port: auto
+
+actions:
+- deploy:
+    timeout:
+      minutes: 20
+    to: nbd
+    os: oe
+    failure_retry: 2
+    protocols:
+      lava-xnbd:
+      - action: nbd-deploy
+        request: set_port
+    kernel:
+      url: ${FILESERVER_URL}/adlink/${JOB_NAME}/${TARGET_KERNEL_IMAGE_NAME}
+      # url: https://download.automotivelinux.org/AGL/snapshots/master/latest/intel-corei7-64/deploy/images/intel-corei7-64/bzImage
+    initrd:
+      url: ${FILESERVER_URL}/adlink/${JOB_NAME}/${TARGET_INITRAMFS_IMAGE_NAME}
+      # url: https://download.automotivelinux.org/AGL/snapshots/master/latest/intel-corei7-64/deploy/images/intel-corei7-64/initramfs-netboot-image-intel-corei7-64.ext4.gz
+    nbdroot:
+      url: ${FILESERVER_URL}/adlink/${JOB_NAME}/${TARGET_ROOTFS_IMAGE_NAME}
+      # url: https://download.automotivelinux.org/AGL/snapshots/master/latest/intel-corei7-64/deploy/images/intel-corei7-64/agl-demo-platform-crosssdk-intel-corei7-64.ext4.xz
+      compression: gz
+
+- boot:
+    timeout:
+      minutes: 8
+    method: ipxe
+    commands: nbd
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    transfer_overlay:
+      download_command: udhcpc -i eth0 && sleep 5 && wget
+      unpack_command: tar -C / -xvpf
+    prompts:
+    - 'intel-corei7-64:~#'
+
+- test:
+    failure_retry: 3
+    timeout:
+      minutes: 5
+    definitions:
+      - repository: ${TEST_GIT_REPO}
+        from: git
+        path: ${TEST_DIRECTORY}/${TEST_DEFINITION}
+        name: ${TEST_TITLE}
+        branch: ${TEST_GIT_BRANCH}
+
