@@ -1,0 +1,109 @@
+metadata:
+  test.plan: x86-ipxe devices deploy via tftp initramfs and flash with afu/sce tools
+  device.type: ${DEVICE_TYPE}
+  job.name: ${JOB_NAME}
+  job.arch: ${MACH_ARCH}
+  job.image_url: ${FILESERVER_URL}/adlink/${JOB_NAME}/${TARGET_IMAGE_NAME}
+  job.image_type: ${TEST_IMAGE_TYPE}
+
+device_type: ${DEVICE_TYPE}
+
+context:
+  extra_kernel_args: "console=${CONSOLE_DEVICE},115200n8"
+
+job_name: ${JOB_NAME}
+
+timeouts:
+  job:
+    minutes: 60
+  action:
+    minutes: 3
+  connection:
+    minutes: 2
+
+priority: medium
+
+visibility: public
+
+actions:
+- deploy:
+    timeout:
+      minutes: 20
+    to: tftp
+    kernel:
+      url: ${FILESERVER_URL}/adlink/${JOB_NAME}/${TARGET_IMAGE_NAME}
+    os: oe
+
+- boot:
+    timeout:
+      minutes: 10
+    method: ipxe
+    commands: ramdisk
+    parameters:
+      shutdown-message: "reboot: Restarting system"
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    transfer_overlay:
+      download_command: udhcpc -i eth0 && sleep 5 && wget
+      unpack_command: tar -C / -xvpf
+    prompts:
+    - 'intel-corei7-64:~#'
+
+- test:
+    timeout:
+      minutes: 20
+    definitions:
+    - repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: flash-bios
+          description: "Download and Flash BIOS binary using AfuLnx"
+        run:
+          steps:
+          - lava-test-case linux-INLINE-wget --shell wget ${FILESERVER_URL}/adlink/${JOB_NAME}/${BIOS_IMAGE_NAME} -O /usr/sbin/${BIOS_IMAGE_NAME}
+          - cd /usr/sbin/
+          - lava-test-case linux-INLINE-afulnx --shell ./afulnx_64 ${BIOS_IMAGE_NAME} /p /n /r
+      from: inline
+      name: flashbios
+      path: inline/flashbios.yaml
+    - repository: ${TEST_GIT_REPO}
+      from: git
+      path: ${TEST_DIRECTORY}/scelnx-tests-basic.yaml
+      name: scelnx-set-pxe-boot
+      branch: ${TEST_GIT_BRANCH}
+
+- deploy:
+    timeout:
+      minutes: 20
+    to: tftp
+    kernel:
+      url: ${FILESERVER_URL}/adlink/${JOB_NAME}/${TARGET_IMAGE_NAME}
+    os: oe
+
+- boot:
+    timeout:
+      minutes: 10
+    method: ipxe
+    commands: ramdisk
+    parameters:
+      shutdown-message: "reboot: Restarting system"
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    transfer_overlay:
+      download_command: udhcpc -i eth0 && sleep 5 && wget
+      unpack_command: tar -C / -xvpf
+    prompts:
+    - 'intel-corei7-64:~#'
+
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+      - repository: ${TEST_GIT_REPO}
+        from: git
+        path: ${TEST_DIRECTORY}/${TEST_DEFINITION}
+        name: ${TEST_TITLE}
+        branch: ${TEST_GIT_BRANCH}
+
